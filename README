@@ -34,11 +34,11 @@ Unix or Linux system, MEMPACK can be compiled simply with:
 make
 
 
-If you've installed Boost in a non-standard location, you may have to 
+If you've installed Boost in a non-standard location, you may have to
 edit the Makefile.
 
 A copy of SVM Light is included; the executable will be placed in the bin
-folder where the run_memsat-svm.pl expects to find it. Full details of 
+folder where the run_memsat-svm.pl expects to find it. Full details of
 SVM light, including the licence, can be found at:
 
 http://svmlight.joachims.org/
@@ -53,6 +53,11 @@ cpan -i GD GD::SVG Image::Magick
 
 
 Otherwise, they can be found at http://www.cpan.org/.
+
+To run mempack you need to download the mempack datasets available at
+http://bioinfadmin.cs.ucl.ac.uk/downloads/mempack/ and then:
+
+  ./tar -zxvf mempack_datasets.tar.gz
 
 To configure MEMPACK, the paths to the NCBI binary directory and a database
 for PSI-BLAST searches must be set. The script will try to find the right
@@ -72,7 +77,7 @@ You can also pass these values using the following parameters:
 Ubuntu Configuration
 ====================
 
-The ./run_mempack.pl uses bash instead of Ubuntu's dash shell. You'll 
+The ./run_mempack.pl uses bash instead of Ubuntu's dash shell. You'll
 have to change it like this:
 
 
@@ -166,7 +171,7 @@ Generating JPG image output/2BRD_A_Kamada-Kawai_1.jpg
 
 A number of useful files are produced:
 
-output/2BRD_A_LIPID_EXPOSURE.results : Lipid exposure prediction results. Columns 
+output/2BRD_A_LIPID_EXPOSURE.results : Lipid exposure prediction results. Columns
 correspond to residue position, residue type and raw SVM score. Above zero is a
 positive prediction (lipid exposed), zero or below is a negative prediction.
 
@@ -175,7 +180,7 @@ results. Columns correspond to the interacting residue pair, interaction helix
 pair and raw SVM scores (only positive results are shown). If you want to constrain
 a prediction, you can modify this file by adding interacting residue and helix pairs
 and a score of 1. Re-run mempack and a new layout will be plotted using the constrained
-results (if the results files exist, svm-classify won't be run again so this step 
+results (if the results files exist, svm-classify won't be run again so this step
 will be fast).
 
 output/2BRD_A_Kamada-Kawai_1.jpg : JPG images showing the predicted helical packing
