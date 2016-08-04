@@ -7,7 +7,7 @@ CFLAGS=-O3
 LFLAGS=-O3
 LIBS=-lm
 INC=/usr/include/
-BOOST=/backup/testing/test_scripts/boost_1_38_0
+BOOST=/cs/research/bioinf/home1/green/dbuchan/Downloads/boost_1_38_0
 MKDIR=mkdir
 
 all: create_input create_bin create_output svm_classify kk_plot
