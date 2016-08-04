@@ -1,0 +1,203 @@
+MEMPACK Usage Notes
+===================
+
+Program  and documentation  is  Copyright  (C)  2009  David T. Jones and
+Timothy Nugent, all rights reserved.
+
+All Trademarks and Registered Names are acknowledged in this document.
+
+THIS SOFTWARE MAY ONLY BE USED FOR NON-COMMERCIAL PURPOSES. PLEASE CONTACT
+THE AUTHOR IF YOU REQUIRE A LICENSE FOR COMMERCIAL USE.
+
+
+Compiling MEMPACK
+=================
+
+MEMPACK requires the Boost C++ libraries which can be downloaded from
+http://www.boost.org/. It was developed and tested using version 1.37 -
+later version may not work. On Redhat/Fedora/Centos systems you should
+be able to install via yum using a command like:
+
+yum install boost boost-devel
+
+On Debian/Ubuntu systems try:
+
+apt-get install libboost libboost-devel
+
+If available, you can just install the Boost graph library. You may also need
+to edit the BOOST variable in the Makefile.
+
+MEMPACK was developed using gcc-4.3 and g++-4.3. On a standard
+Unix or Linux system, MEMPACK can be compiled simply with:
+
+
+make
+
+
+If you've installed Boost in a non-standard location, you may have to 
+edit the Makefile.
+
+A copy of SVM Light is included; the executable will be placed in the bin
+folder where the run_memsat-svm.pl expects to find it. Full details of 
+SVM light, including the licence, can be found at:
+
+http://svmlight.joachims.org/
+
+To produce graphical representations of the helical packing arrangement,
+the GD, GD::SVG and Image::Magick perl modules must be installed. The GD
+C library should be present on most modern Linux distributions. Perl
+modules can usually be installed by running the following command as root:
+
+
+cpan -i GD GD::SVG Image::Magick
+
+
+Otherwise, they can be found at http://www.cpan.org/.
+
+To configure MEMPACK, the paths to the NCBI binary directory and a database
+for PSI-BLAST searches must be set. The script will try to find the right
+directory using 'locate blastpgp. If it can't be found you can set the
+paths at the top of the run_mempack.pl script:
+
+## NCBI / Database paths
+my $ncbidir = '........'; # where blastpgp and makemat are found
+my $dbname  = '........'; # e.g. swissprot.fa, which has been formatdb'ed
+
+You can also pass these values using the following parameters:
+
+
+./run_mempack.pl -d <databse> -n /usr/local/blast/bin/ fasta.fa
+
+
+Ubuntu Configuration
+====================
+
+The ./run_mempack.pl uses bash instead of Ubuntu's dash shell. You'll 
+have to change it like this:
+
+
+sudo ln -sf /bin/bash /bin/sh
+
+
+Running MEMPACK
+===============
+
+To run MEMPACK using fasta files, having already set the database and NCBI paths:
+
+
+./run_mempack.pl -t 45,66,76,97,118,140 examples/1JB0_L.fa
+
+
+The program requires the transmembrane topology to be passed using the -t
+flag. This can be predicted by programs such as memsat-svm.
+
+To run MEMPACK using PSI-BLAST .mtx files:
+
+
+./run_mempack.pl -mtx 1 -t 38,63,72,96,109,133,153,172,202,224,253,274,286,309 examples/1GZM_A.mtx
+
+
+Below is a full list of command line paramaters:
+
+Options:
+
+-a <1|2|3>     Distance between atoms in interacting residue pair. Default 1.
+               1 = Less than 8 angstroms between C-beta atoms (C-alpha for glycine).
+               2 = Less than the sum of their van der Waals radii plus a threshold of 0.6 angstroms.
+               3 = Less than 5.5 angstroms between sidechain or backbone heavy atoms.
+-mtx <0|1>     Process PSI-BLAST .mtx files instead of fasta files. Default 0.
+-n <directory> NCBI binary directory (location of blastpgp and makemat)
+-d <path>      Database for running PSI-BLAST.
+-t <topology>  Transmembrane topology helix boundaries in the form: 20,35,50,70,91,108
+-j <path>      Output path for all files. Default: output/
+-w <path>      Directory that contains mempack-svm. Default ''
+-e <0|1>       Erase intermediate files. Default 0.
+-f <0|1>       Erase files from previous runs. Default 0.
+-g <0|1>       Draw schematic. Default 1.
+-r <0|1>       Draw residue-residue contacts. Default 1.
+-c <int>       Number of CPU cores to use for PSI-BLAST. Default 1.
+-h <0|1>       Show help. Default 0.
+
+
+
+Example Results
+===============
+
+In this  example MEMPACK  is used to predict the helical packing arrangement of
+Bacteriorhodopsin. The input file (in FASTA format) is as follows:
+
+>2BRD_A
+MLELLPTAVEGVSQAQITGRPEWIWLALGTALMGLGTLYFLVKGMGVSDPDAKKFYAITTLVPAIAFTMYLSML
+LGYGLTMVPFGGEQNPIYWARYADWLFTTPLLLLDLALLVDADQGTILALVGADGIMIGTGLVGALTKVYSYRF
+VWWAISTAAMLYILYVLFFGFTSKAESMRPEVASTFKVLRNVTVVLWSAYPVVWLIGSEGAGIVPLNIETLLFM
+VLDVSAKVGFGLILLRSRAIFGEAEAPEPSAGDGAAATSD
+
+The transmembrane helix boundaries are as follows:
+
+22,43,57,75,93,110,121,140,145,166,187,209,214,235
+
+Run the program like this, having set NCBI and database paths:
+
+
+./run_mempack.pl -t 22,43,57,75,93,110,121,140,145,166,187,209,214,235  examples/2BRD_A.fa
+
+********************************************************
+*   MEMPACK - Predicting transmembrane helix packing   *
+*       arrangements using residue contacts and        *
+*              a force-directed algorithm.             *
+* Copyright (C) 2009 Timothy Nugent and David T. Jones *
+********************************************************
+
+Running PSI-BLAST: examples/2BRD_A.fa
+/usr/local/blast/bin/blastpgp -a 1 -j 2 -h 1e-3 -e 1e-3 -b 0 -d /home/tnugent/blast-2.2.15/swissprot/uniprot_sprot -i mempack_tmp.fasta -C mempack_tmp.chk >& mempack_tmp.out
+
+bin/svm_classify -v 0 input/2BRD_A_LIPID_EXP.dat models/LIPID_EXPOSURE_ALL.model output/2BRD_A_LIPID_EXPOSURE.predictions
+Written output/2BRD_A_LIPID_EXPOSURE.results
+
+bin/svm_classify -v 0 input/2BRD_A_CONTACT.dat models/CONTACT_ALL_DEF1.model output/2BRD_A_CONTACT_DEF1.predictions
+Written output/2BRD_A_CONTACT_DEF1.results
+
+Generating layout...
+bin/kk_plot output/2BRD_A_CONTACT_DEF1.results > output/2BRD_A_graph.out
+
+Generating JPG image output/2BRD_A_Kamada-Kawai_1.jpg
+
+
+
+A number of useful files are produced:
+
+output/2BRD_A_LIPID_EXPOSURE.results : Lipid exposure prediction results. Columns 
+correspond to residue position, residue type and raw SVM score. Above zero is a
+positive prediction (lipid exposed), zero or below is a negative prediction.
+
+output/2BRD_A_CONTACT_DEF1.results : Residue contact and helix-helix interaction
+results. Columns correspond to the interacting residue pair, interaction helix
+pair and raw SVM scores (only positive results are shown). If you want to constrain
+a prediction, you can modify this file by adding interacting residue and helix pairs
+and a score of 1. Re-run mempack and a new layout will be plotted using the constrained
+results (if the results files exist, svm-classify won't be run again so this step 
+will be fast).
+
+output/2BRD_A_Kamada-Kawai_1.jpg : JPG images showing the predicted helical packing
+arrangement.
+
+output/2BRD_A_graph.out : Helix positions and rotations. Where multiple helical packing
+arrangements are produced, they are scored according to the lowest total residue-residue
+contact distance.
+
+
+FINALLY
+=======
+
+If you  need  assistance in  getting  MEMPACK  working, or if you find any
+bugs, please contact the author at the following e-mail address:
+
+Timothy Nugent
+E-mail: t.nugent@cs.ucl.ac.uk
+
+Bioinformatics Unit
+Dept. of Computer Science
+University College
+Gower Street
+London
+WC1E 6BT
