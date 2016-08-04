@@ -1,3 +1,6 @@
 mempack_datasets.tar.gz
 memsat-svm_datasets/
 models/
+bin/
+input/
+output/
