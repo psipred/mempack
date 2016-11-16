@@ -6,17 +6,18 @@
 ## *              a force-directed algorithm.             *
 ## * Copyright (C) 2009 Timothy Nugent and David T. Jones *
 ## ********************************************************
-## 
+##
 ## This program is copyright and may not be distributed without
 ## permission of the author unless specifically permitted under
 ## the terms of the license agreement.
-## 
-## THIS SOFTWARE MAY ONLY BE USED FOR NON-COMMERCIAL PURPOSES. PLEASE 
+##
+## THIS SOFTWARE MAY ONLY BE USED FOR NON-COMMERCIAL PURPOSES. PLEASE
 ## CONTACT THE AUTHOR IF YOU REQUIRE A LICENSE FOR COMMERCIAL USE.
 
 use strict;
 use warnings;
-use lib 'lib';
+use FindBin;
+use lib "$FindBin::Bin/lib";
 use Round qw(:all);
 use Getopt::Long;
 
@@ -67,7 +68,7 @@ sub main{
 
 	&get_arguments();
 	&get_normalisation_values();
-	
+
 	# If we've been passed .mtx files rather than fasta files
 	if ($mtx){
 		foreach (@ARGV){
@@ -83,18 +84,18 @@ sub main{
 				$erase_string = $input_path.$split[-1]."*";
 			}
 			$system = `rm $erase_string &> /dev/null`;
-			$erase_string =~ s/^$input_path/$output_path/; 
+			$erase_string =~ s/^$input_path/$output_path/;
 			$system = `rm $erase_string &> /dev/null`;
-		}	
+		}
 
 	# Otherwise run PSI-BLAST to create .mtx files
 	}else{
-		my @fastas;	
+		my @fastas;
 		foreach (@ARGV){
 			$header = $_;
 			$header =~ s/\.fasta//g;
-			$header =~ s/\.fa//g;			
-			
+			$header =~ s/\.fa//g;
+
 			if ($erase_previous){
 				my $erase_string = $input_path.$header."*";;
 				if($header =~ /\//){
@@ -102,10 +103,10 @@ sub main{
 					$erase_string = $input_path.$split[-1]."*";
 				}
 				$system = `rm $erase_string`;
-				$erase_string =~ s/^$input_path/$output_path/; 
+				$erase_string =~ s/^$input_path/$output_path/;
 				$system = `rm $erase_string`;
-			}	
-			
+			}
+
 			push @fastas,$_;
 			&run_psiblast($_);
 		}
@@ -133,35 +134,35 @@ sub main{
 			exit;
 		}
 	}
-	
+
 	open (INPUT,">$input_file");
 
 	my (%lipid_scores,@positions,@residues);
-	
+
 	## Loop through all the helices
 	my $helix1_count = 1;
-	for (my $h = 0; $h < scalar @topology; $h+=2){	
-					
+	for (my $h = 0; $h < scalar @topology; $h+=2){
+
 		#print "TMH $helix1_count :\t$topology[$h] - $topology[$h+1]\n";
 		my $helix1_length = $topology[$h+1] - $topology[$h] + 1;
 
 		## Loop through all positions in this helix
 		for my $p1 ($topology[$h]..$topology[$h+1]){
-						
-			my ($array,$p1_seq) = &create_lipid_input($p1);								
-				
+
+			my ($array,$p1_seq) = &create_lipid_input($p1);
+
 			print INPUT "0 ";
 			my $feature = 1;
 			foreach my $v (@{$array}){
 				print INPUT $feature.":".$v." ";
 				$feature++;
 			}
-			
+
 			push @positions,$p1;
 			push @residues,substr($p1_seq,3,1);
 			my $comment = $p1."_".$p1_seq;
 			print INPUT "# $comment\n";
-	
+
 		}
 		$helix1_count++;
 	}
@@ -170,14 +171,14 @@ sub main{
 
 	my $model = $model_path."LIPID_EXPOSURE_ALL.model";
 	my $prediction = $output_path.$header."_LIPID_EXPOSURE.predictions";
-		
+
 	if (-e $model){
 
 		if (-e $prediction){
 			print "$prediction exists!\n\n";
 		}else{
 			print "$svm_classify -v 0 $input_file $model $prediction\n";
-			$system = `$svm_classify -v 0 $input_file $model $prediction`;	
+			$system = `$svm_classify -v 0 $input_file $model $prediction`;
 		}
 	}else{
 		die "$model doesn't exist.\n";
@@ -185,14 +186,14 @@ sub main{
 
 
 	my $lipid_out = $output_path.$header."_LIPID_EXPOSURE.results";
-	
-	
+
+
 	if (-e $lipid_out){
 
 		print "$lipid_out exists!\n\n";
 
 		unless(open(LIPID,$prediction)){
-			die "Couldn't open $prediction\n";	
+			die "Couldn't open $prediction\n";
 		}else{
 
 			my $count = 0;
@@ -201,18 +202,18 @@ sub main{
 				$value =~ s/\s+//g;
 				$lipid_scores{$positions[$count]} = $value;
 				$count++;
-			}			
+			}
 		}
 
 	}else{
 
 		unless(open(LIPID_OUT,">$lipid_out")){
-			die "Couldn't write to $lipid_out\n";	
+			die "Couldn't write to $lipid_out\n";
 		}
 		print LIPID_OUT "Pos\tRes\tScore\n";
 
 		unless(open(LIPID,$prediction)){
-			die "Couldn't open $prediction\n";	
+			die "Couldn't open $prediction\n";
 		}else{
 
 			if (scalar @positions != scalar @residues && scalar @residues != scalar keys %lipid_scores){
@@ -224,37 +225,37 @@ sub main{
 				my $value = $_;
 				$value =~ s/\s+//g;
 				$lipid_scores{$positions[$count]} = $value;
-				print  LIPID_OUT "$positions[$count]\t$residues[$count]\t$value\n";				
+				print  LIPID_OUT "$positions[$count]\t$residues[$count]\t$value\n";
 				$count++;
-			}			
+			}
 		}
 		close LIPID_OUT;
 		print "Written $lipid_out\n\n";
-	
+
 	}
 
 ## Generate SVM input files for residue-residue contact prediction
 
 	$input_file = $input_path.$header."_CONTACT.dat";
 
-	$helix1_count = 1;	
-	for (my $h = 0; $h < scalar @topology; $h+=2){	
+	$helix1_count = 1;
+	for (my $h = 0; $h < scalar @topology; $h+=2){
 		## Loop through all positions in this helix
 		my $helix1_pos = 1;
-		for my $p1 ($topology[$h]..$topology[$h+1]){			
+		for my $p1 ($topology[$h]..$topology[$h+1]){
 			## Loop through all the helices after current one
-			my $helix2_count = $helix1_count + 1;				
-			for (my $nh = $h+2; $nh < scalar @topology; $nh+=2){	
+			my $helix2_count = $helix1_count + 1;
+			for (my $nh = $h+2; $nh < scalar @topology; $nh+=2){
 				my $helix2_pos = 1;
-				for my $p2 ($topology[$nh]..$topology[$nh+1]){				
+				for my $p2 ($topology[$nh]..$topology[$nh+1]){
 					my $tmp_res = $p1."-".$p2;
 					push @all_contact,$tmp_res;
 					$helix2_pos++;
-				}				
-				$helix2_count++;				
-			}			
-			$helix1_pos++;		
-		}		
+				}
+				$helix2_count++;
+			}
+			$helix1_pos++;
+		}
 		$helix1_count++;
 	}
 
@@ -264,61 +265,61 @@ sub main{
 
 	## Loop through all the helices
 	$helix1_count = 1;
-	for (my $h = 0; $h < scalar @topology; $h+=2){	
-					
+	for (my $h = 0; $h < scalar @topology; $h+=2){
+
 		#print "TMH $helix1_count :\t$topology[$h] - $topology[$h+1]\n";
 		my $helix1_length = $topology[$h+1] - $topology[$h] + 1;
 
 		## Loop through all positions in this helix
 		my $helix1_pos = 1;
 		for my $p1 ($topology[$h]..$topology[$h+1]){
-			
+
 			## Loop through all the helices after current one
-			my $helix2_count = $helix1_count + 1;			
-			
-			for (my $nh = $h+2; $nh < scalar @topology; $nh+=2){	
-			
+			my $helix2_count = $helix1_count + 1;
+
+			for (my $nh = $h+2; $nh < scalar @topology; $nh+=2){
+
 				my $helix2_length = $topology[$nh+1] - $topology[$nh] + 1;
-			
+
 				## Loop through all positions in next helix
 				my $helix2_pos = 1;
 				for my $p2 ($topology[$nh]..$topology[$nh+1]){
-								
-					print "$p1 (TMH ".$helix1_count.") --> $p2 (TMH ".$helix2_count.")\n" if $verbose;					
+
+					print "$p1 (TMH ".$helix1_count.") --> $p2 (TMH ".$helix2_count.")\n" if $verbose;
 					my $distance = $p2 - $p1;
-					
+
 					# Get windows around these two residues
 					my ($array,$p1_p2_seq) = &create_contact_input($p1,$p2);
-					
+
 					## Global features
 					print "Helix $helix1_count length = $helix1_length\n" if $verbose;
-					print "Residue 1 pos in helix = $helix1_pos\n" if $verbose;			
+					print "Residue 1 pos in helix = $helix1_pos\n" if $verbose;
 					my ($relative_pos1,$relative_pos2);
-					
+
 					if ($helix1_count % 2){
 						$relative_pos1 = $helix1_pos/$helix1_length;
 					}else{
 						$relative_pos1 = 1 - ($helix1_pos/$helix1_length);
 					}
-					print "Residue 1 relative pos in helix = $relative_pos1\n" if $verbose;				
-				
+					print "Residue 1 relative pos in helix = $relative_pos1\n" if $verbose;
+
 					print "Helix $helix2_count length = $helix2_length\n" if $verbose;
 					print "Residue 2 pos in helix = $helix2_pos\n" if $verbose;
-					
+
 					if ($helix2_count % 2){
-						$relative_pos2 = $helix2_pos/$helix2_length;											
+						$relative_pos2 = $helix2_pos/$helix2_length;
 					}else{
-						$relative_pos2 = 1 - ($helix2_pos/$helix2_length);	
-					}				
-					print "Residue 2 relative pos in helix = $relative_pos2\n" if $verbose;					
+						$relative_pos2 = 1 - ($helix2_pos/$helix2_length);
+					}
+					print "Residue 2 relative pos in helix = $relative_pos2\n" if $verbose;
 					print "Distance = $distance\n\n" if $verbose;
-					
+
 					my $s1 = substr($sequence,$p1-1,1);
 					my $s2 = substr($sequence,$p2-1,1);
 					my $res1 = $aa3{$s1};
-					my $res2 = $aa3{$s2};			
-					my $label = 0;	
-					
+					my $res2 = $aa3{$s2};
+					my $label = 0;
+
 					print INPUT "$label ";
 
 					my $feature = 1;
@@ -346,7 +347,7 @@ sub main{
 					}else{
 						print INPUT $feature.":0 ";
 					}
-					$feature++;					
+					$feature++;
 					if ($distance > 50 && $distance <= 75){
 						print INPUT $feature.":1 ";
 					}else{
@@ -358,7 +359,7 @@ sub main{
 					}else{
 						print INPUT $feature.":0 ";
 					}
-					$feature++;	
+					$feature++;
 					if ($distance > 100 && $distance <= 125){
 						print INPUT $feature.":1 ";
 					}else{
@@ -370,7 +371,7 @@ sub main{
 					}else{
 						print INPUT $feature.":0 ";
 					}
-					$feature++;					
+					$feature++;
 					if ($distance > 150 && $distance <= 175){
 						print INPUT $feature.":1 ";
 					}else{
@@ -382,35 +383,35 @@ sub main{
 					}else{
 						print INPUT $feature.":0 ";
 					}
-					$feature++;						
+					$feature++;
 					if ($distance > 200){
 						print INPUT $feature.":1 ";
 					}else{
 						print INPUT $feature.":0 ";
 					}
-					$feature++;							
-						
-					## Add lipid exposure scores					
+					$feature++;
+
+					## Add lipid exposure scores
 					print INPUT $feature.":".$lipid_scores{$p1}." ";
 					$feature++;
 					print INPUT $feature.":".$lipid_scores{$p2}." ";
-					$feature++;					
-									
+					$feature++;
+
 					my $comment = $p1."_".$p2."_".$p1_p2_seq."_".$res1."_".$res2;
 
 					print INPUT "# $comment\n";
 
 					$helix2_pos++;
-				}				
-				$helix2_count++;				
-			}			
-			$helix1_pos++;		
-		}		
+				}
+				$helix2_count++;
+			}
+			$helix1_pos++;
+		}
 		$helix1_count++;
 	}
 
 	close INPUT;
-	
+
 	}else{
 		print "$input_file exits!\n\n";
 	}
@@ -419,23 +420,23 @@ sub main{
 	$prediction = $output_path.$header."_CONTACT_DEF1.predictions";
 	my $output = $output_path.$header."_CONTACT_DEF1.results";
 	my $graph_out = $output_path.$header."_graph.out";
-		
+
 	if($def == 3){
 		$model = $model_path."CONTACT_ALL_DEF3.model";
-		$prediction = $output_path.$header."_CONTACT_DEF3.predictions";	
+		$prediction = $output_path.$header."_CONTACT_DEF3.predictions";
 		$output = $output_path.$header."_CONTACT_DEF3.results";
 	}elsif($def == 2){
 		$model = $model_path."CONTACT_ALL_DEF2.model";
-		$prediction = $output_path.$header."_CONTACT_DEF2.predictions";	
+		$prediction = $output_path.$header."_CONTACT_DEF2.predictions";
 		$output = $output_path.$header."_CONTACT_DEF2.results";
-	}		
-		
+	}
+
 	if (-e $model){
 		if (-e $prediction){
 			print "$prediction exists!\n\n";
 		}else{
 			print "$svm_classify -v 0 $input_file $model $prediction\n";
-			$system = `$svm_classify -v 0 $input_file $model $prediction`;	
+			$system = `$svm_classify -v 0 $input_file $model $prediction`;
 		}
 	}else{
 		die "$model doesn't exist.\n";
@@ -446,13 +447,13 @@ sub main{
 	my %residue_to_helix;
 
 	my $helix = 1;
-	for (my $h = 0;$h < scalar @topology; $h += 2){	
+	for (my $h = 0;$h < scalar @topology; $h += 2){
 		my $r_start = $topology[$h];
 		my $r_stop = $topology[$h+1]+1;
-		for my $r ($r_start..$r_stop){		
-			$residue_to_helix{$r} = $helix;		
+		for my $r ($r_start..$r_stop){
+			$residue_to_helix{$r} = $helix;
 		}
-		$helix++;	
+		$helix++;
 	}
 
 	my %contact_scores;
@@ -460,19 +461,19 @@ sub main{
 	my %pred_hh;
 
 	if (-e $output){
-	
+
 		print "$output exists!\n\n";
 		unless(open(OUTPUT,$output)){
-			die "Couldn't open $output\n";	
+			die "Couldn't open $output\n";
 		}else{
 			while(<OUTPUT>){
-				next if $_ =~ /Topology/;				
+				next if $_ =~ /Topology/;
 				my @split = split(/\s+/,$_);
 				push @predicted_contact,$split[0];
 				$pred_hh{$split[1]} = 1;
 			}
-			close OUTPUT;			
-		}	
+			close OUTPUT;
+		}
 	}else{
 
 		open(OUT,">$output");
@@ -480,13 +481,13 @@ sub main{
 		print OUT "# Topology:\t";
 		foreach my $t (@topology){
 			$top_string = $top_string.$t.",";
-		
+
 		}
 		chop $top_string;
 		print OUT "$top_string\n";
 
 		unless(open(CONTACT,$prediction)){
-			die "Couldn't open $prediction\n";	
+			die "Couldn't open $prediction\n";
 		}else{
 			my $count = 0;
 			while(<CONTACT>){
@@ -494,19 +495,19 @@ sub main{
 				$value =~ s/\s+//g;
 				if($value > 0){
 
-					my @split = split(/-/,$all_contact[$count]);		
-					if (exists $residue_to_helix{$split[0]} && exists $residue_to_helix{$split[1]}){			
+					my @split = split(/-/,$all_contact[$count]);
+					if (exists $residue_to_helix{$split[0]} && exists $residue_to_helix{$split[1]}){
 						print OUT "$all_contact[$count]\t",$residue_to_helix{$split[0]},"-",$residue_to_helix{$split[1]},"\t$value\n";
 						push @predicted_contact,$all_contact[$count];
 						my $hh = $residue_to_helix{$split[0]}."-".$residue_to_helix{$split[1]};
 						$pred_hh{$hh} = 1;
-					}			
-				}							
+					}
+				}
 				$count++;
 			}
-			close CONTACT;			
-		}	
-		close OUT;	
+			close CONTACT;
+		}
+		close OUT;
 		print "Written $output\n\n";
 	}
 
@@ -521,10 +522,10 @@ sub main{
 
 	print "Generating layout...\n";
 	my $system = `rm  $graph_out` if -e $graph_out;
-	
+
 	print "$kk_plot $output > $graph_out\n\n";
 	$system = `$kk_plot $output > $graph_out`;
-		
+
 	if (!-e $graph_out){
 		die "Couldn't plot layout!\n\n";
 	}
@@ -544,13 +545,13 @@ sub main{
 
 		open(KK,$graph_out);
 		my @kk = <KK>;
-		close KK;	
+		close KK;
 		my $tag = 0;
-		
+
 		foreach my $k (@kk){
-			
+
 			if ($k =~ /===/){
-				
+
 				my @selected_helices = keys %kk_graph;
 				my $im;
 
@@ -565,7 +566,7 @@ sub main{
 				    		-residue_contacts=>\@predicted_contact,
 				    		-rotations=>\@rotations,
 				    		-helix_diameter=>235,
-				    		-only_these_helices=>,\@selected_helices				    
+				    		-only_these_helices=>,\@selected_helices
 				    );
 
 				}else{
@@ -578,15 +579,15 @@ sub main{
 				    		-graph_centres=>\%kk_graph,
 				    		-rotations=>\@rotations,
 				    		-helix_diameter=>235,
-				    		-only_these_helices=>,\@selected_helices				    
-				    	);				
-				
+				    		-only_these_helices=>,\@selected_helices
+				    	);
+
 				}
 
 				my $svg = $output_path.$header.'_Kamada-Kawai.svg';
 				open(OUTPUT, ">$svg");
 				binmode OUTPUT;
-				print OUTPUT $im->svg; 
+				print OUTPUT $im->svg;
 				close OUTPUT;
 
 				my $jpg = $output_path.$header.'_Kamada-Kawai_'.$image_no.'.jpg';
@@ -597,10 +598,10 @@ sub main{
 				$system = `rm $svg`;
 				$image_no++;
 				@rotations = ();
-				%kk_graph = ();	
+				%kk_graph = ();
 			}
-			
-			
+
+
 			next unless $k =~ /\(/;
 			my @split = split(/\s+/,$k);
 			my $x = 0;
@@ -608,7 +609,7 @@ sub main{
 			if ($split[1] =~ /\((-?\d+\.?\d*e?-?\d*),(-?\d+\.?\d*e?-?\d*)\)/){
 				$x = $1;
 				$y = $2;
-			}			
+			}
 			$kk_graph{$split[0]} = [$x,$y];
 			push @rotations,$split[2];
 		}
@@ -628,28 +629,28 @@ sub create_contact_input {
 	my ($pos1,$pos2) = @_;
 	my $p1_p2_seq = "";
 	my $array = ();
-	
+
 	## Get window for 1st residude
-		
+
 	print "$pos1\t- central position in SW sequence\n" if $verbose;
 	$pos1--; ## Since position 1 in @profile is 0
 
 	## Push all the arrays onto @array
-	
+
 	for my $w ($pos1 - (($window- 1)/2) .. $pos1 + (($window- 1)/2)){
 		print "$w\t- window positions required from profile\n" if $verbose;
-		
+
 		if (defined @{$profile{$w}} ){
 			push @{$array},@{$profile{$w}};
 		}else{
 			push @{$array},@empty;
 		}
 	}
-		
-	## Generate sequence window for the comment		
-	my $window_seq1 = "";		
+
+	## Generate sequence window for the comment
+	my $window_seq1 = "";
 	for my $j ($pos1 - (($window- 1)/2) .. $pos1 + (($window- 1)/2)){
-			
+
 		print "j = $j\t- substring position required from sequence\n" if $verbose;
 		if ($j < 0 || $j >= $length){
 			$window_seq1 .= 'X';
@@ -660,21 +661,21 @@ sub create_contact_input {
 	print "$window_seq1\n\n" if $verbose;
 
 	## Get window for 2md residude
-		
+
 	print "$pos2\t- central position in SW sequence\n" if $verbose;
 	$pos2--; ## Since position 1 in @profile is 0
 
 	## Push all the arrays onto @array
-	
+
 	for my $w ($pos2 - (($window- 1)/2) .. $pos2 + (($window- 1)/2)){
 		print "$w\t- window positions required from profile\n" if $verbose;
 		push @{$array},@{$profile{$w}}
 	}
-		
-	## Generate sequence window for the comment		
-	my $window_seq2 = "";		
+
+	## Generate sequence window for the comment
+	my $window_seq2 = "";
 	for my $j ($pos2 - (($window- 1)/2) .. $pos2 + (($window- 1)/2)){
-			
+
 		print "j = $j\t- substring position required from sequence\n" if $verbose;
 		if ($j < 0 || $j >= $length){
 			$window_seq2 .= 'X';
@@ -683,7 +684,7 @@ sub create_contact_input {
 		}
 	}
 	print "$window_seq2\n\n" if $verbose;
-	
+
 	$p1_p2_seq = $window_seq1."-".$window_seq2;
 
 	return($array,$p1_p2_seq);
@@ -697,21 +698,21 @@ sub create_lipid_input {
 	my $array = ();
 
 	$pos1--; ## Since position 1 in @profile is 0
-	
+
 	for my $w ($pos1 - (($window- 1)/2) .. $pos1 + (($window- 1)/2)){
 		#print "$w\t- window positions required from profile\n";
-		
+
 		if (defined @{$profile{$w}} ){
 			push @{$array},@{$profile{$w}};
 		}else{
 			push @{$array},@empty;
 		}
 	}
-		
-	## Generate sequence window for the comment		
-	my $window_seq1 = "";		
+
+	## Generate sequence window for the comment
+	my $window_seq1 = "";
 	for my $j ($pos1 - (($window- 1)/2) .. $pos1 + (($window- 1)/2)){
-			
+
 		#print "j = $j\t- substring position required from sequence\n" if $verbose;
 		if ($j < 0 || $j >= $length){
 			$window_seq1 .= 'X';
@@ -739,9 +740,9 @@ sub load_mtx{
 	if (-e $mtx){
 		open (MTX,$mtx);
 		@mtx = <MTX>;
-		close MTX;	
+		close MTX;
 	}else{
-		die "Couldn't find $mtx\n";	
+		die "Couldn't find $mtx\n";
 	}
 
 	$length = $mtx[0];
@@ -763,15 +764,15 @@ sub load_mtx{
 			if (defined $mtx[$_+13-(($window- 1)/2)]){
 
 				@{$profile{$_}} = split(/\s+/,$mtx[$_+13-(($window- 1)/2)]);
-			
+
 				## Now do the Z score normalisation
-			
+
 				## Not normalised
 				#print "Not normalised: @{$profile{$_}}\n";
-			
+
 				my $z_count = 0;
 				foreach my $z (@{$profile{$_}}){
-			
+
 					## Normalise to Z score
 					$z= ($z - $range{$z_count}{'mean'})/$range{$z_count}{'sd'};
 					## Scale
@@ -786,9 +787,9 @@ sub load_mtx{
 				${$profile{$_}}[7],${$profile{$_}}[8],${$profile{$_}}[9],${$profile{$_}}[10],${$profile{$_}}[11],
 				${$profile{$_}}[12],${$profile{$_}}[13],${$profile{$_}}[14],${$profile{$_}}[15],${$profile{$_}}[16],
 				${$profile{$_}}[17],${$profile{$_}}[18],${$profile{$_}}[19],${$profile{$_}}[21],${$profile{$_}}[22]);
-			
+
 				@{$profile{$_}} = @aa_20;
-		
+
 
 			}
 		}
@@ -815,14 +816,14 @@ sub get_arguments{
 				 	"g=i" => \$graphics,
 					"f=i" => \$erase_previous,
 					"c=i" => \$cores,
-					"r=i" => \$draw_rr_contacts,							
+					"r=i" => \$draw_rr_contacts,
 			         	"h"  => sub {&usage;});
 
 		## Get rid of trailing slashes
 		$ncbidir =~ s/\/+$//;
-		
+
 		unless($mtx){
-		
+
 			## Check the NCBI directory
 			unless (-d $ncbidir){
 
@@ -830,11 +831,11 @@ sub get_arguments{
 				my $system = `which blastpgp`;
 				if ($system =~ /(.*)\/blastpgp$/){
 					$ncbidir = $1;
-					$ncbidir =~ s/\s+//g;	
+					$ncbidir =~ s/\s+//g;
 				}
 
 				unless (-d $ncbidir){
-					print "NCBI directory $ncbidir doesn't exist. Please pass it using\n"; 
+					print "NCBI directory $ncbidir doesn't exist. Please pass it using\n";
 					print "the -n paramater or modifiy the value at the top of the script.\n\n";
 					exit;
 				}
@@ -844,38 +845,38 @@ sub get_arguments{
 			my $psiblast = $ncbidir."/blastpgp";
 			my $makemat = $ncbidir."/makemat";
 			unless (-e $psiblast){
-				print "Can't find the program blastpgp in the NCBI directory $ncbidir\n"; 
+				print "Can't find the program blastpgp in the NCBI directory $ncbidir\n";
 				print "Please pass the correct NCBI location using the -n paramater or modifiy\n";
 				print "the value at the top of the script..\n\n";
-				exit;			
+				exit;
 			}
 			unless (-e $makemat){
-				print "Can't find the program makemat in the NCBI directory $ncbidir\n"; 
+				print "Can't find the program makemat in the NCBI directory $ncbidir\n";
 				print "Please pass the correct NCBI location using the -n paramater or modifiy\n";
 				print "the value at the top of the script..\n\n";
-				exit;				
+				exit;
 			}
 
 			if ($dbname eq ''){
-				print "The database name for PSI-BLAST searches has not been set. Please pass it using\n"; 
+				print "The database name for PSI-BLAST searches has not been set. Please pass it using\n";
 				print "the -d paramater or modifiy the value at the top of the script.\n\n";
-				exit;		
+				exit;
 			}
 		}
-		
-		if (defined $topology_string){		
-			@topology = split(/,/,$topology_string);			
-			#shift @topology;						
+
+		if (defined $topology_string){
+			@topology = split(/,/,$topology_string);
+			#shift @topology;
 			if(scalar @topology % 2){
-				print "Uneven number of helix boundaries detected.\n\n"; 
-				exit;	
-			}		
+				print "Uneven number of helix boundaries detected.\n\n";
+				exit;
+			}
 		}else{
-			print "Topology for this sequence was not provided. Please pass it using\n"; 
+			print "Topology for this sequence was not provided. Please pass it using\n";
 			print "the -t paramater.\n\n";
-			exit;			
+			exit;
 		}
-				
+
 		if (defined $mem_dir){
 			$svm_classify = $mem_dir.'bin/svm_classify';
 			$input_path = $mem_dir.'input/';
@@ -883,7 +884,7 @@ sub get_arguments{
 			$font = $mem_dir.$font;
 			unshift @INC, $new_lib;
 		}
-		
+
 		if($output_path =~ /^output\/$/)
 		{
 			$output_path = $mem_dir.'output/';
@@ -892,10 +893,10 @@ sub get_arguments{
 		$datadir = $mem_dir.'data/';
 
 		unless (-e $svm_classify){
-			print "Can't find $svm_classify - have you run make?\n\n"; 
-			exit;			
+			print "Can't find $svm_classify - have you run make?\n\n";
+			exit;
 		}
-				
+
 	}
 }
 
@@ -931,35 +932,35 @@ sub run_psiblast {
 	my $mtx;
 	if ($fasta =~ /\//){
 		my @tmp = split(/\//,$fasta);
-		$mtx = $tmp[-1].".mtx"; 
+		$mtx = $tmp[-1].".mtx";
 	}else{
-		$mtx = $fasta.".mtx"; 
-	}	
-	
+		$mtx = $fasta.".mtx";
+	}
+
 	if ($fasta =~ /mtx/){
 		print "This looks like an .mtx file! It should be a fasta file, otherwise\n";
 		print "pass the -mtx 1 flag.\n\n";
 		exit;
-	}	
-	
+	}
+
 	$mtx =~ s/\.fa//;
 	$mtx =~ s/\.fasta//;
 	my $out_mtx = $output_path.$mtx;
 
-	my $blast_out = "mempack_tmp.out"; 
+	my $blast_out = "mempack_tmp.out";
 
 	die "Fasta file $fasta doesn't exist!\n" unless -e $fasta;
 
 	unless (-e $out_mtx || -e $mtx){
-	
+
 		print "Running PSI-BLAST: $fasta\n";
 
 		my $system = `cp -f $fasta mempack_tmp.fasta`;
 		print "$ncbidir/blastpgp -a $cores -j 2 -h 1e-3 -e 1e-3 -b 0 -d $dbname -i mempack_tmp.fasta -C mempack_tmp.chk >& $blast_out\n\n";
 		$system = `$ncbidir/blastpgp -a $cores -j 2 -h 1e-3 -e 1e-3 -b 0 -d $dbname -i mempack_tmp.fasta -C mempack_tmp.chk >& $blast_out`;
-		
+
 		unless (-e "mempack_tmp.chk"){
-		
+
 			print "There was an error running PSI-BLAST. Did you set the database path correctly?\n\n";
 			open(ERROR,$blast_out);
 			my @error = <ERROR>;
@@ -968,29 +969,29 @@ sub run_psiblast {
 				print $line;
 			}
 			print "\n";
-			exit;				
-		}		
-		
+			exit;
+		}
+
 		$system = `echo mempack_tmp.chk > mempack_tmp.pn`;
 		$system = `echo mempack_tmp.fasta > mempack_tmp.sn`;
-		$system = `echo "$ncbidir/makemat -P mempack_tmp"`;		
+		$system = `echo "$ncbidir/makemat -P mempack_tmp"`;
 		$system = `$ncbidir/makemat -P mempack_tmp`;
 		$system = `cp mempack_tmp.mtx $mtx`;
 		$system = `rm -f mempack_tmp*`;
-		$system = `rm -f error.log` if -e "error.log";	
+		$system = `rm -f error.log` if -e "error.log";
 
 	}
-	
+
 	if (-e $mtx){
 		$system = `mv $mtx $output_path`;
-		$mtx = $output_path.$mtx;	
+		$mtx = $output_path.$mtx;
 		push @mtx,$mtx;;
-	}elsif (-e $out_mtx){	
-		$mtx = $out_mtx;	
-		push @mtx,$mtx;;		
+	}elsif (-e $out_mtx){
+		$mtx = $out_mtx;
+		push @mtx,$mtx;;
 	}else{
 		die "Problem creating $mtx\n";
-	}	
+	}
 }
 
 # Load graphics modules
@@ -1143,7 +1144,7 @@ sub get_normalisation_values {
         $range{27}{'lower'} = 0;
         $range{27}{'upper'} = 33113;
         $range{27}{'range'} = 33113;
-	
+
 	%aa = (
 	'GLY'=>'G',
 	'PRO'=>'P',
@@ -1189,5 +1190,5 @@ sub get_normalisation_values {
 	'S' => 'SER',
 	'T' => 'THR'
 	);
-	
+
 }
