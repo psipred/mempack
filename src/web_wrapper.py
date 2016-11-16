@@ -2,6 +2,9 @@ import sys
 import re
 from subprocess import call
 
+# Usage:
+# python web_wrapper.py /tmp/21ee4184-ac09-11e6-affd-989096c13ee6/21ee4184-ac09-11e6-affd-989096c13ee6.memsat_svm /opt/Code/mempack/run_mempack.pl /tmp/21ee4184-ac09-11e6-affd-989096c13ee6/21ee4184-ac09-11e6-affd-989096c13ee6.mtx /opt/Code/mempack
+
 topology_string = ''
 with open(sys.argv[1], "r") as f:
     for line in f:
