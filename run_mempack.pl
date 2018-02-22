@@ -809,6 +809,7 @@ sub get_arguments{
                                  	"mtx=i" => \$mtx,
 				 	"d=s" => \$dbname,
 					"j=s" => \$output_path,
+          "i=s" => \$input_path,
 					"t=s" => \$topology_string,
 					"w=s" => \$mem_dir,
 				 	"e=i" => \$remove_files,
@@ -879,7 +880,7 @@ sub get_arguments{
 
 		if (defined $mem_dir){
 			$svm_classify = $mem_dir.'bin/svm_classify';
-			$input_path = $mem_dir.'input/';
+			# $input_path = $mem_dir.'input/';
 			my $new_lib = $mem_dir."lib";
 			$font = $mem_dir.$font;
 			unshift @INC, $new_lib;
@@ -914,6 +915,7 @@ sub usage {
 	print "-n <directory> NCBI binary directory (location of blastpgp and makemat)\n";
 	print "-d <path>      Database for running PSI-BLAST.\n";
 	print "-t <topology>  Transmembrane topology helix boundaries in the form: 20,35,50,70,91,108\n";
+	print "-i <path>      Path to folder for SVM classify input files. Default input/\n";
 	print "-j <path>      Output path for all files. Default: output/\n";
 	print "-w <path>      Directory that contains mempack. Default ''\n";
 	print "-e <0|1>       Erase intermediate files. Default 0.\n";

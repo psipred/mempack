@@ -19,6 +19,7 @@ mtx = sys.argv[3]
 out = sys.argv[4]
 mdir = sys.argv[5]
 
-args = [exe, "-mtx", "1", "-t", topology_string, '-w', mdir, "-j", out, mtx]
+args = [exe, "-mtx", "1", "-t", topology_string, '-w', mdir, "-j", out, "-i", out, mtx]
+#        "-e", "1", "-f", "1", mtx]
 print(" ".join(args))
 call(args)
