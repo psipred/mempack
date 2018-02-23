@@ -590,11 +590,11 @@ sub main{
 				print OUTPUT $im->svg;
 				close OUTPUT;
 
-				my $jpg = $output_path.$header.'_Kamada-Kawai_'.$image_no.'.jpg';
-				print "Generating JPG image $jpg\n\n";
-				my $p = Image::Magick->new(magick=>'jpg',quality=>70);
+				my $png = $output_path.$header.'_Kamada-Kawai_'.$image_no.'.png';
+				print "Generating JPG image $png\n\n";
+				my $p = Image::Magick->new(magick=>'png',quality=>100);
 				$p->Read($svg);
-				$p->Write($jpg);
+				$p->Write($png);
 				$system = `rm $svg`;
 				$image_no++;
 				@rotations = ();
@@ -640,7 +640,8 @@ sub create_contact_input {
 	for my $w ($pos1 - (($window- 1)/2) .. $pos1 + (($window- 1)/2)){
 		print "$w\t- window positions required from profile\n" if $verbose;
 
-		if (defined @{$profile{$w}} ){
+		#if (defined @{$profile{$w}} ){
+		if (@{$profile{$w}} ){
 			push @{$array},@{$profile{$w}};
 		}else{
 			push @{$array},@empty;
@@ -702,7 +703,8 @@ sub create_lipid_input {
 	for my $w ($pos1 - (($window- 1)/2) .. $pos1 + (($window- 1)/2)){
 		#print "$w\t- window positions required from profile\n";
 
-		if (defined @{$profile{$w}} ){
+		#if (defined @{$profile{$w}} ){
+		if (@{$profile{$w}} ){
 			push @{$array},@{$profile{$w}};
 		}else{
 			push @{$array},@empty;
@@ -880,6 +882,7 @@ sub get_arguments{
 
 		if (defined $mem_dir){
 			$svm_classify = $mem_dir.'bin/svm_classify';
+      $kk_plot = $mem_dir.'bin/kk_plot';
 			# $input_path = $mem_dir.'input/';
 			my $new_lib = $mem_dir."lib";
 			$font = $mem_dir.$font;
@@ -999,8 +1002,8 @@ sub run_psiblast {
 # Load graphics modules
 sub load_module {
 	eval "require $_[0]";
-    	return(1) if $@;
-    	$_[0]->import(@_[1 .. $#_]);
+  return(1) if $@;
+  $_[0]->import(@_[1 .. $#_]);
 }
 
 # Normalisation values
