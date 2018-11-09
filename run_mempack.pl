@@ -734,6 +734,7 @@ sub load_mtx{
 	my $header = shift;
 
 	my $mtx = $output_path.$header.".mtx";
+  my $lmtx = $output_path.$header.".lmtx";
 
 	if (-e $mtx[0]){
 		$mtx = $mtx[0];
@@ -743,8 +744,13 @@ sub load_mtx{
 		open (MTX,$mtx);
 		@mtx = <MTX>;
 		close MTX;
-	}else{
-		die "Couldn't find $mtx\n";
+	}elsif(-e $lmtx){
+	  open (MTX,$lmtx);
+    @mtx = <MTX>;
+    close MTX;
+  }
+  else{
+		die "Couldn't find $mtx or $lmtx\n";
 	}
 
 	$length = $mtx[0];
