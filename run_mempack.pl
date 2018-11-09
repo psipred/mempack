@@ -73,7 +73,7 @@ sub main{
 	if ($mtx){
 		foreach (@ARGV){
 			push @mtx,$_;
-			$_ =~ s/\.mtx//g;
+			$_ =~ s/\.mtx|\.lmtx//g;
 			$header = $_;
 		}
 
