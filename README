@@ -25,17 +25,20 @@ On Debian/Ubuntu systems try:
 apt-get install libboost libboost-devel
 
 If available, you can just install the Boost graph library. You may also need
-to edit the BOOST variable in the Makefile.
+to edit the BOOST variable in the Makefile. Note that this may not compile
+without a compatible, early, gcc.
 
-MEMPACK was developed using gcc-4.3 and g++-4.3. On a standard
-Unix or Linux system, MEMPACK can be compiled simply with:
-
+MEMPACK was developed using gcc-4.3 and g++-4.3. You may have to build this
+yourself. (You may have more success compiling
+https://ftp.gnu.org/gnu/gcc/gcc-4.6.4/). Don't forget to pass an install
+location (/usr/local/gcc-4.3.6) to configure. On a compatible Unix or
+Linux system, MEMPACK can be compiled simply with:
 
 make
 
-
 If you've installed Boost in a non-standard location, you may have to
-edit the Makefile.
+edit the Makefile. And similarly pass the locaton of gcc-4.3.6 to the make
+file.
 
 A copy of SVM Light is included; the executable will be placed in the bin
 folder where the run_memsat-svm.pl expects to find it. Full details of
