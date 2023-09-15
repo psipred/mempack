@@ -28,6 +28,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <boost/property_map/property_map.hpp>
 #include <boost/graph/random_layout.hpp>
 #include <boost/graph/circle_layout.hpp>
 #include "kamada_kawai_spring_layout.h"
@@ -521,7 +522,11 @@ int main(int argc, char* argv[]){
 		// initial arrangement rather than arrange in a circle
 		if (total == 5){			
 			//cout << "Random layout:" << endl;
-			random_graph_layout(G, position, 0, (int)width, 0, (int)height, gen);
+			//random_graph_layout(G, position, 0, (int)width, 0, (int)height, gen);
+			typedef boost::rectangle_topology<minstd_rand> RectTopology;
+			typedef RectTopology::point_type point;
+			RectTopology rect_top(gen, 0, (int)width, 0, int(height));
+			random_graph_layout(G, position, rect_top);
   		}else{	
 			//cout << "Circle layout:" << endl;
 			circle_graph_layout(G, position, radius);
