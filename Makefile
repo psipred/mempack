@@ -7,7 +7,7 @@ CFLAGS=-O3
 LFLAGS=-O3
 LIBS=-lm
 INC=/usr/include/
-BOOST=/cs/research/bioinf/home1/green/dbuchan/Downloads/boost_1_38_0
+BOOST=/opt/boost_1_38_0
 MKDIR=mkdir
 
 all: create_input create_bin create_output svm_classify kk_plot
@@ -37,4 +37,4 @@ svm_classify: src/svm_classify.o src/svm_common.o
 	$(LD) $(LFLAGS) src/svm_classify.o src/svm_common.o -o bin/svm_classify $(LIBS)
 
 kk_plot: src/draw_graphs.cpp src/globals.cpp src/paramopt.c
-	$(CPP) -Wno-write-strings -Wno-deprecated -I$(BOOST) -I$(INC) $(LIBS) -O2 src/draw_graphs.cpp src/globals.cpp src/paramopt.c -o bin/kk_plot
+	$(CPP) --std=c++11 -Wno-write-strings -Wno-deprecated -I$(BOOST) -I$(INC) $(LIBS) -O2 src/draw_graphs.cpp src/globals.cpp src/paramopt.c -o bin/kk_plot
