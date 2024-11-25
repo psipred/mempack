@@ -1,0 +1,7 @@
+- name: Install mempack
+  hosts: all
+  roles:
+    - blast
+    - mempack
+  vars_files:
+   - ./config_vars.yml

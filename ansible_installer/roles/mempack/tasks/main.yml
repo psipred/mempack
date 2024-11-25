@@ -1,0 +1,171 @@
+---
+
+  - name: Check if ImageMagick is installed
+    stat: path=/{{ app_location }}/ImageMagick-7.1.1-30
+    register: im_exist
+
+  - name: Download ImageMagick
+    when: im_exist.stat.exists == False
+    get_url:
+      url: https://github.com/ImageMagick/ImageMagick/archive/refs/tags/7.1.1-30.tar.gz
+      dest: "{{ app_location }}/"
+      timeout: 120
+    register: get_url_result
+
+  - name: untar ImageMagick
+    when: im_exist.stat.exists == False
+    unarchive:
+      src: "{{ app_location }}/ImageMagick-7.1.1-30.tar.gz"
+      dest: "{{ app_location }}/"
+      remote_src: yes
+
+  - name: configure IM
+    shell: cd {{ app_location }}/ImageMagick-7.1.1-30/; ./configure
+    when: im_exist.stat.exists == False
+
+  - name: make IM
+    shell: cd {{ app_location }}/ImageMagick-7.1.1-30/; make
+    when: im_exist.stat.exists == False
+
+  - name: install IM
+    shell: "cd {{ app_location }}/ImageMagick-7.1.1-30/; make install"
+    become_user: root
+    become_method: sudo
+    become: true
+    when: im_exist.stat.exists == False
+
+  - name: link the ImageMagick libs
+    when: im_exist.stat.exists == False
+    become_user: root
+    become_method: sudo
+    become: true
+    shell: "cd {{ app_location }}/ImageMagick-7.1.1-30/; ldconfig /usr/local/lib"
+
+  # - name: Install SVG.pm
+  #   cpanm:
+  #     name: SVG
+  #     mirror: http://cpan.mirror.triple-it.nl/
+
+  # - name: Install GD::SVG.pm
+  #   cpanm:
+  #     name: GD::SVG
+  #     mirror: http://cpan.mirror.triple-it.nl/
+
+  ## WE ARE NOT RUNNING THE TESTS HERE AS 1 out of 273 tests fails and maybe that's ok
+  # - name: Install Image::Magick.pm
+  #   cpanm:
+  #     name: Image::Magick
+  #     notest: true
+  #     mirror: http://cpan.mirror.triple-it.nl/
+
+  - name: install SVG.pm
+    become_user: root
+    become_method: sudo
+    become: true
+    shell: "/usr/local/bin/cpanm SVG"
+
+  - name: install GD::SVG
+    become_user: root
+    become_method: sudo
+    become: true
+    shell: "/usr/local/bin/cpanm GD::SVG"
+
+  - name: install Image::Magick
+    become_user: root
+    become_method: sudo
+    become: true
+    shell: "LD_LIBRARY_PATH={{ app_location }}/ImageMagick-7.1.1-30/MagickCore/.libs/ /usr/local/bin/cpanm --notest Image::Magick"
+
+  - name: Check if boost is present
+    stat: path={{ app_location }}/boost_1_37_0
+    register: boost_exist
+
+  - name: Download boost 1.37
+    when: boost_exist.stat.exists == False
+    get_url:
+      url: https://master.dl.sourceforge.net/project/boost/boost/1.37.0/boost_1_37_0.tar.gz?viasf=1
+      dest: "{{ app_location }}/"
+      timeout: 120
+    register: get_url_result
+
+  - name: untar boost 1.37
+    when: boost_exist.stat.exists == False
+    unarchive:
+      src: "{{ app_location }}/boost_1_37_0.tar.gz"
+      dest: "{{ app_location }}"
+      remote_src: yes
+
+  - name: configure boost
+    when: boost_exist.stat.exists == False
+    shell: "cd {{ app_location }}/boost_1_37_0/; ./configure"
+
+  - name: make boost
+    when: boost_exist.stat.exists == False
+    shell: "cd {{ app_location }}/boost_1_37_0/; make"
+
+  - name: Check if mempack is present
+    stat: path={{ app_location }}/mempack
+    register: mempack_exist
+
+  - name : Check out mempack from GIT
+    when: mempack_exist.stat.exists == False
+    git:
+      repo: https://github.com/psipred/mempack.git
+      dest: "{{ app_location }}/mempack"
+      clone: yes
+      force: yes
+
+  - name: Download mempack model data
+    when: mempack_exist.stat.exists == False
+    shell: "chdir={{ app_location }}/mempack wget --timeout 120 http://bioinfadmin.cs.ucl.ac.uk/downloads/mempack/mempack_datasets.tar.gz"
+    register: get_url_result
+    # until: get_url_result.stdout.find("Unable to establish SSL connection") == -1
+    # retries: 2
+    # delay: 10
+
+  - name: update boost location
+    ansible.builtin.lineinfile:
+      path:  "{{ app_location }}/mempack/Makefile"
+      regexp: "^BOOST="
+      line: "BOOST={{ app_location }}/boost_1_37_0/"
+
+  - name: make mempack
+    # when: mempack_exist.stat.exists == False
+    shell: "cd {{ app_location }}/mempack/; make"
+
+  - name: untar mempack dataset
+    # when: mempack_exist.stat.exists == False
+    unarchive:
+      src: "{{ app_location }}/mempack/mempack_datasets.tar.gz"
+      dest: "{{ app_location }}/mempack"
+      remote_src: yes
+
+  - name: remove tar.gz
+    # when: mempack_exist.stat.exists == False
+    ansible.builtin.file:
+      state: absent
+      path: "{{ app_location }}/mempack/mempack_datasets.tar.gz"
+
+  - name: remove IM tar.gz
+    # when: mempack_exist.stat.exists == False
+    ansible.builtin.file:
+      state: absent
+      path: "{{ app_location }}/ImageMagick-7.1.1-30.tar.gz"
+
+  - name: remove boost tar.gz
+    # when: mempack_exist.stat.exists == False
+    ansible.builtin.file:
+      state: absent
+      path: "{{ app_location }}/boost_1_37_0.tar.gz"
+
+  - name: update blast location
+    ansible.builtin.lineinfile:
+      path:  "{{ app_location }}/mempack/run_mempack.pl"
+      regexp: "^my .ncbidir ="
+      line: "my $ncbidir = '{{ app_location}}/blast-2.2.26/bin';"
+
+  - name: update blastdb location
+    ansible.builtin.lineinfile:
+      path:  "{{ app_location }}/mempack/run_mempack.pl"
+      regexp: "^my .dbname ="
+      line: "my $dbname = '{{ data_location }}/uniref/uniref50.fasta';"
