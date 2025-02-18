@@ -7,7 +7,7 @@ CFLAGS=-O3
 LFLAGS=-O3
 LIBS=-lm
 INC=/usr/include/
-BOOST=/opt/boost_1_37_0
+BOOST=/data/boost_1_37_0
 MKDIR=mkdir
 
 all: create_input create_bin create_output svm_classify kk_plot
